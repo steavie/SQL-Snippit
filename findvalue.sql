@@ -30,8 +30,11 @@ begin
 END;
 $$ language plpgsql;
 
+-- Suchabfrage wird für den 'SuchString' ausgeführt 
 
 select * from search_columns('SuchSting');
+
+-- Suchabfrage wirdspeziell auf das gefundene Table ausgeführt 
 
 select * from public.tamudb2 where ctid='(3,29)';
 
