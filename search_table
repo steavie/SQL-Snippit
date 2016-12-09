@@ -1,0 +1,25 @@
+-- Liste alle table der DB auf 
+
+SELECT table_name
+FROM information_schema.tables
+ORDER BY table_schema,table_name ;
+
+-- Liste alle table welche in Public und Base Table sind 
+
+SELECT table_name 
+FROM information_schema.tables 
+WHERE table_type = 'BASE TABLE' 
+    AND table_schema = 'public' 
+ORDER BY table_type, table_name ;
+
+-- Liste table mit einem bestimmten Spaltennamen auf
+
+select table_name, column_name from information_schema.columns where column_name = 'netto_c'  ;
+
+--  Liste table mit einem bestimmten Spaltennamen auf Version 2
+
+SELECT * 
+FROM information_schema.columns 
+WHERE TRUE
+AND table_schema = 'public'
+AND column_name ~* 'brutto_c' ;
