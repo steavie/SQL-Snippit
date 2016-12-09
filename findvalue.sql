@@ -1,3 +1,4 @@
+-- Funktion wird erstellt oder ersetzt 
 
 CREATE OR REPLACE FUNCTION search_columns(
     needle text,
@@ -29,7 +30,8 @@ begin
 END;
 $$ language plpgsql;
 
-select * from search_columns('Hesse');
+
+select * from search_columns('SuchSting');
 
 select * from public.tamudb2 where ctid='(3,29)';
 
