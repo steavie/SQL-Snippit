@@ -34,7 +34,7 @@ $$ language plpgsql;
 
 select * from search_columns('SuchSting');
 
--- Suchabfrage wirdspeziell auf das gefundene Table ausgeführt 
+-- Suchabfrage wird speziell auf das gefundene Table ausgeführt 
 
-select * from public.tamudb2 where ctid='(3,29)';
+select * from public.'hier table aus der abfrage ohne qoute' where ctid='(3,29)';
 
