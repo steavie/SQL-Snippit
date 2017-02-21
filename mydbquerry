@@ -1,0 +1,403 @@
+-- abfrage mit bedingung "in der splate trans muss stehen ('Kessel', 'Regelungen') und in der spalte product  ('Buderus','Viessmann','Kieback & Peter','Priva','Riedel') geordnet nach 
+
+SELECT * FROM Kessel WHERE trans in ('Kessel', 'Regelungen') AND product in ('Buderus','Viessmann','Kieback & Peter','Priva','Riedel') ORDER BY typ ASC, object_number ASC;
+
+-- abfrage mit bedingung  zähle 
+
+SELECT product, COUNT(product) AS Anzahl FROM Kessel WHERE trans in ('Regelungen') AND product in ('Buderus','Viessmann','Kieback & Peter','Priva','Riedel') GROUP BY product;
+
+-- abfrage mit bedingung  keine mehrfachaufzählung gleicher namen
+
+SELECT distinct product, typ FROM Kessel WHERE trans in ('Regelungen') AND typ <> '' order by product;
+
+-- 
+
+insert - into steuerung (product, typ) (
+SELECT distinct product, typ FROM Kessel WHERE trans in ('Regelungen') AND typ <> '' order by product
+);
+
+SELECT * FROM Kessel WHERE trans in ('Kessel', 'Regelungen') AND product in ('Riedel') ORDER BY typ ASC, object_number ASC
+
+select * from steuerung;
+
+-- füge spalte hinzu mit name "info" und datentyp text
+
+ALTER TABLE kessel ADD COLUMN Info text;
+SELECT * FROM Kessel WHERE trans in ('Regelungen') AND product in ('Wolf') ORDER BY typ ASC, object_number ASC;
+
+-- trage in tabelle "kessel" in die spalte "bus" den wert "RS455" wo der name in spalte product ist wolf und die spalte type  
+
+UPDATE kessel SET bus='RS485' WHERE trans in ('Regelungen') AND product in ('Wolf') AND typ LIKE '%33%';
+
+SELECT * FROM Kessel WHERE bus  <> '' ORDER BY typ ASC, object_number ASC;
+UPDATE kessel SET bus='RS232 / IRDA' WHERE trans in ('Regelungen') AND bus='RS232 IRDA';
+SELECT distinct product,typ,bus FROM Kessel WHERE trans in ('Regelungen') AND typ <> '' AND bus <> '' order by bus;
+SELECT bus, COUNT(bus) AS Anzahl FROM Kessel WHERE trans in ('Regelungen') AND bus <> ''  GROUP BY bus ORDER  BY bus;
+
+
+select kessel.*
+from kessel,(select object_number from kessel where trans ='Regelungen' AND bus <> '') as t1
+where kessel.object_number = t1.object_number AND trans='Kessel'
+
+update kessel
+set verbindung =True
+from (select object_number from kessel where trans ='Regelungen' AND bus <> '') as t1
+where kessel.object_number = t1.object_number AND trans='Kessel'
+
+select distinct object_name from Kessel where verbindung ='true'
+
+--- neue tabelle
+
+CREATE TABLE geocode
+(
+Adresse text,
+matchinfo text,
+matchadresse text,
+latitude text,
+longitude text,
+locationinfo text,
+markerpoint text,
+hausnummer text,
+gefundeneadresse text,
+plz text,
+ort text,
+land text,
+bundesland text,
+energielieferobjekt text
+);
+-- import csv mit trennung , 
+COPY geocode FROM '/Users/kriesel/Downloads/Kesselstandort - Kesselstandort (4).csv' DELIMITERS ',' CSV;
+
+--backup
+select * into kesselbackup001 from kessel
+
+
+----- 6.7.2015
+
+ALTER TABLE kessel ADD COLUMN energielieferobjekt boolean
+ALTER TABLE kessel ADD COLUMN active boolean
+
+select * from kessel
+
+
+SELECT * 
+FROM kessel
+WHERE levenshtein(object_name, 'AB123-lHdfj') <= 3
+ORDER BY levenshtein(object_name, 'AB123-lHdfj')
+LIMIT 10
+CREATE EXTENSION postgis;
+-- Enable Topology
+CREATE EXTENSION postgis_topology;
+-- fuzzy matching needed for Tiger
+CREATE EXTENSION fuzzystrmatch;
+-- Enable US Tiger Geocoder
+CREATE EXTENSION postgis_tiger_geocoder;
+
+update geocode set adresse = replace(adresse,'Marquardt,','');
+select * from geocode
+
+select kessel.* from kessel, geocode
+where geocode.adresse = kessel.object_name and trans='Kessel'
+
+update kessel set active = true
+from geocode
+where geocode.adresse = kessel.object_name
+
+SELECT geocode.* 
+FROM geocode 
+WHERE geocode.adresse not in (
+	select distinct kessel.object_name from kessel, geocode
+	where geocode.adresse = kessel.object_name and trans='Kessel'
+   );
+
+update kessel set active = true where object_name LIKE 'Dahlienweg 1%' AND object_name <> 'Dahlienweg 14 (Haus 1)'
+
+select * from Kessel where object_name LIKE 'Dahlienweg 12%'
+
+update kessel set active = true where object_name LIKE 'Schlegel%';
+select * from Kessel where object_name LIKE 'Schlegel%' 
+
+update kessel set energielieferobjekt = true where object_name LIKE 'Schlegel%';
+select * from Kessel where object_name LIKE 'Schlegel%'
+
+select distinct object_name from Kessel where verbindung ='true' AND active=true AND energielieferobjekt is NULL;
+
+
+update kessel set active=false where active is NULL
+select * from kessel
+
+select distinct kessel.object_name from kessel, geocode
+	where geocode.adresse = kessel.object_name and trans='Kessel'
+
+
+select * from Kessel where object_name LIKE 'Dahlienweg 12%'
+
+select * from geocode where adresse LIKE 'Dahlienweg 12%'
+
+update geocode set adresse='Dahlienweg 12 (Haus 2)' where adresse LIKE 'Dahlienweg 12%';
+update geocode set adresse='Seestraße 13-15' where adresse LIKE 'Seestraße 13%';
+update geocode set adresse='Nackenheimer Weg 1-7; Oberlandstraße 108' where adresse LIKE 'Nackenheimer Weg 1-7%';
+update geocode set adresse='Güntzelstr. 48 / Nassauische Str. 57' where adresse LIKE 'Güntzelstr. 48%';
+update geocode set adresse='Dahlienweg 11 (Haus 3)' where adresse LIKE 'Dahlienweg 11%';
+update geocode set adresse='Dahlienweg 10 (Haus 4)' where adresse LIKE 'Dahlienweg 10%';
+update geocode set adresse='Raumerstraße 20, Senefelder Straße 8 / 8 a' where adresse LIKE 'Raumerstraße 20%';
+update geocode set adresse='Basselweg 8-14' where adresse LIKE 'Basselweg 8%';
+update geocode set adresse='Eschersheimer Straße 8-16; Oberlandstraße 109-110' where adresse LIKE 'Eschersheimer Straße 8-16%';
+update geocode set adresse='Hauptstr. 11 / Belziger Str. 1' where adresse LIKE 'Hauptstr. 11%';
+update geocode set adresse='Friedrich-Wolf-Straße 51/53' where adresse LIKE 'Friedrich-Wolf-Straße 51%';
+update geocode set adresse='Kieler Straße 350-356' where adresse LIKE 'Kieler Straße 350%';
+update geocode set adresse='Britzer Damm 206-208 / Koppelweg 1' where adresse LIKE 'Britzer%';
+update geocode set adresse='Chausseestraße 8/ Novalisstraße 11' where adresse LIKE 'Chausseestraße 8%';
+update geocode set adresse='Rolandstraße 110-113' where adresse LIKE 'Rolandstraße 110%';
+update geocode set adresse='Marie-Curie-Allee 48-56' where adresse LIKE 'Marie-Curie-Allee 48%';
+update geocode set adresse='Greifenhagener Straße 17, Stargarder Straße 6' where adresse LIKE 'Greifenhagener Straße 17%';
+update geocode set adresse='Winterfeldtstr. 45 / Goltzstr. 24' where adresse LIKE 'Winterfeldtstr. 45 %';
+update geocode set adresse='Schlegelstr. 32 / Chausseestr. 15' where adresse LIKE 'Schlegelstr. 32%';
+
+
+
+
+
+ALTER TABLE kessel ADD COLUMN latitude text;
+ALTER TABLE kessel ADD COLUMN longitude text;
+ALTER TABLE kessel ADD COLUMN plz text;
+ALTER TABLE kessel ADD COLUMN ort text;
+
+update kessel set latitude = geocode.latitude, longitude = geocode.longitude, ort = geocode.ort FROM geocode WHERE kessel.object_name = geocode.adresse
+
+select object_number,object_name,objects_supply_location,latitude,longitude,product,typ from kessel where product LIKE '%Buderus%' AND trans = 'Regelungen' AND bus LIKE '%LON%' AND ort LIKE '%Berlin%' AND active=true AND energielieferobjekt=false  order by construction_year DESC
+
+
+-- 17.12
+
+COPY raumer FROM '/Users/kriesel/Downloads/raumer.csv' DELIMITERS ',' CSV;
+
+select zeitstempel,hk1_vl_ist,hk2_vl_ist,brennerstufe,kessel_ist,ww_ist,aussen from raumer order by zeitstempel ASC
+
+select distinct (variable) from raumer 
+select CASE when wert LIKE 'FF80' THEN 1 else 0 END from raumer
+
+UPDATE raumer SET brennerstufe= CASE when wert LIKE 'FF80' THEN 1 else 0 END where variable='Brennerstufe1'
+UPDATE raumer SET kessel_ist= cast (wert AS double precision)  where variable='Kessel-Ist-Temperatur'
+UPDATE raumer SET aussen= cast (wert AS double precision)  where variable='Aussentemperatur'
+
+select hk1.zeitstempel, hk1.hk1_vl_ist,hk2.hk2_vl_ist from (select zeitstempel, hk1_vl_ist from raumer) as hk1 ,(select zeitstempel, hk2_vl_ist from raumer) as hk2 where hk1.zeitstempel=hk2.zeitstempel 
+
+SELECT hk1.zeitstempel, hk1_vl_ist, hk2_vl_ist
+from (select zeitstempel, hk1_vl_ist from raumer) as hk1 
+LEFT JOIN (select zeitstempel, hk2_vl_ist from raumer) as hk2
+ON hk1.zeitstempel=hk2.zeitstempel 
+
+
+
+SELECT * FROM Kessel 
+
+SELECT distinct object_number,objects_supply_location,object_name,ort,active,energielieferobjekt,latitude,longitude,plz,ort FROM Kessel WHERE active = true and ort in ('Berlin') and energielieferobjekt = false order by objects_supply_location
+
+
+-------------------------------------------------------------Hydraulik
+
+CREATE TABLE hydraulicscheme
+(
+object_number text,
+adresse text,
+plz text,
+ort text,
+latitude text,
+longitude text,
+link text,
+anlagentyp text,
+fw_anschlusstyp text,
+kesselanzahl text,
+hw_vorhanden text,
+p_hw_zum_verteiler text,
+heizkreis_anzahl text,
+mischer_anzahl text,
+mischerart text,
+pumpe_kesselkreis text,
+pumpe_heizkreis text,
+warmwasserbereitung  text,
+waermeuebertrager text,
+speicheranzahl text,
+müll text
+);
+
+COPY hydraulicscheme FROM '/Users/kriesel/Downloads/Auswertung Hadraulikschematas - hydraulicscheme.csv' DELIMITERS ',' CSV;
+
+
+Unterschiede und Übereinstimmung 
+
+SELECT object_number FROM hydraulicscheme 
+EXCEPT
+SELECT object_number FROM kessel 
+
+SELECT object_number FROM hydraulicscheme 
+INTERSECT 
+SELECT object_number FROM kessel 
+
+
+
+SELECT hydraulicscheme.latitude , hydraulicscheme.longitude
+FROM hydraulicscheme 
+WHERE hydraulicscheme.object_number in (
+	select distinct kessel.object_number from kessel )    
+
+SELECT distinct kessel.latitude
+FROM kessel 
+WHERE kessel.object_number in (
+	select distinct hydraulicscheme.object_number from hydraulicscheme ) and kessel.latitude <>'';
+
+
+update hydraulicscheme set latitude = kessel.latitude 
+FROM kessel 
+WHERE kessel.object_number = hydraulicscheme.object_number and kessel.latitude <>'';
+
+update hydraulicscheme set longitude = kessel.longitude 
+FROM kessel 
+WHERE kessel.object_number = hydraulicscheme.object_number and kessel.longitude <>'';
+
+update hydraulicscheme set ort = kessel.ort
+FROM kessel 
+WHERE kessel.object_number = hydraulicscheme.object_number and kessel.ort <>'';
+
+update hydraulicscheme set plz = kessel.plz
+FROM kessel 
+WHERE kessel.object_number = hydraulicscheme.object_number and kessel.plz <>'';
+
+
+
+hydraulicscheme.object_number in (select distinct kessel.object_number from kessel where kessel.latitude <>'' ) ;
+
+
+select * from hydraulicscheme order by object_number ASC
+
+--Gruppe
+
+--Test
+select * from hydraulicscheme where anlagentyp in ('Brennwert', 'Niedertemperatur') and waermeuebertrager in ('intern','extern');
+
+--Typ 1
+select * from hydraulicscheme where anlagentyp in ('Brennwert') and hw_vorhanden = true and mischer_anzahl in ('0') and waermeuebertrager not in ('intern','extern');
+--Typ 2
+select * from hydraulicscheme where anlagentyp in ('Brennwert') and hw_vorhanden = TRUE and mischer_anzahl not in ('0') and waermeuebertrager NOT IN ('intern','extern');
+--Typ3
+select * from hydraulicscheme where anlagentyp in ('Brennwert') and hw_vorhanden = TRUE and mischer_anzahl not in ('0') and waermeuebertrager in ('intern');
+--Typ4
+select * from hydraulicscheme where anlagentyp in ('Brennwert') and hw_vorhanden = TRUE and mischer_anzahl not in ('0') and waermeuebertrager in ('extern');
+--Typ5
+select * from hydraulicscheme where anlagentyp in ('Brennwert') and hw_vorhanden = TRUE and mischer_anzahl in ('0') and waermeuebertrager in ('intern');
+--Typ6
+select * from hydraulicscheme where anlagentyp in ('Brennwert') and hw_vorhanden = TRUE and mischer_anzahl in ('0') and waermeuebertrager in ('extern');
+--Typ7
+select * from hydraulicscheme where anlagentyp in ('Brennwert') and hw_vorhanden = FALSE and mischer_anzahl in ('0') and waermeuebertrager not in ('intern','extern');
+--Typ8
+select * from hydraulicscheme where anlagentyp in ('Brennwert') and hw_vorhanden = FALSE and mischer_anzahl not in ('0') and waermeuebertrager NOT IN ('intern','extern');
+--Typ9
+select * from hydraulicscheme where anlagentyp in ('Brennwert') and hw_vorhanden = FALSE and mischer_anzahl not in ('0') and waermeuebertrager in ('intern');
+--Typ10
+select * from hydraulicscheme where anlagentyp in ('Brennwert') and hw_vorhanden = FALSE and mischer_anzahl not in ('0') and waermeuebertrager in ('extern');
+--Typ11
+select * from hydraulicscheme where anlagentyp in ('Brennwert') and hw_vorhanden = FALSE and mischer_anzahl in ('0') and waermeuebertrager in ('intern');
+--Typ12
+select * from hydraulicscheme where anlagentyp in ('Brennwert') and hw_vorhanden = FALSE and mischer_anzahl in ('0') and waermeuebertrager in ('extern');
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--Typ13
+select * from hydraulicscheme where anlagentyp in ('Niedertemperatur') and hw_vorhanden = true and mischer_anzahl in ('0') and waermeuebertrager not in ('intern','extern');
+--Typ12
+select * from hydraulicscheme where anlagentyp in ('Niedertemperatur') and hw_vorhanden = TRUE and mischer_anzahl not in ('0') and waermeuebertrager NOT IN ('intern','extern');
+--Typ15
+select * from hydraulicscheme where anlagentyp in ('Niedertemperatur') and hw_vorhanden = TRUE and mischer_anzahl not in ('0') and waermeuebertrager in ('intern');
+--Typ16
+select * from hydraulicscheme where anlagentyp in ('Niedertemperatur') and hw_vorhanden = TRUE and mischer_anzahl not in ('0') and waermeuebertrager in ('extern');
+--Typ17
+select * from hydraulicscheme where anlagentyp in ('Niedertemperatur') and hw_vorhanden = TRUE and mischer_anzahl in ('0') and waermeuebertrager in ('intern');
+--Typ18
+select * from hydraulicscheme where anlagentyp in ('Niedertemperatur') and hw_vorhanden = TRUE and mischer_anzahl in ('0') and waermeuebertrager in ('extern');
+--Typ19
+select * from hydraulicscheme where anlagentyp in ('Niedertemperatur') and hw_vorhanden = FALSE and mischer_anzahl in ('0') and waermeuebertrager not in ('intern','extern');
+--Typ20
+select * from hydraulicscheme where anlagentyp in ('Niedertemperatur') and hw_vorhanden = FALSE and mischer_anzahl not in ('0') and waermeuebertrager NOT IN ('intern','extern');
+--Typ21
+select * from hydraulicscheme where anlagentyp in ('Niedertemperatur') and hw_vorhanden = FALSE and mischer_anzahl not in ('0') and waermeuebertrager in ('intern');
+--Typ22
+select * from hydraulicscheme where anlagentyp in ('Niedertemperatur') and hw_vorhanden = FALSE and mischer_anzahl not in ('0') and waermeuebertrager in ('extern');
+--Typ23
+select * from hydraulicscheme where anlagentyp in ('Niedertemperatur') and hw_vorhanden = FALSE and mischer_anzahl in ('0') and waermeuebertrager in ('intern');
+--Typ24
+select * from hydraulicscheme where anlagentyp in ('Niedertemperatur') and hw_vorhanden = FALSE and mischer_anzahl in ('0') and waermeuebertrager in ('extern');
+
+-- Tabelle Brennwert Typen Häufigkeit 
+SELECT (SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Brennwert') and waermeuebertrager in ('intern','extern')) AS Gesamt_Brennwert_Hydraulik_Schema,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Brennwert') and hw_vorhanden = TRUE and mischer_anzahl in ('0') and waermeuebertrager not in ('intern','extern')) AS Typ1,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Brennwert') and hw_vorhanden = TRUE and mischer_anzahl not in ('0') and waermeuebertrager NOT IN ('intern','extern')) AS Typ2,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Brennwert') and hw_vorhanden = TRUE and mischer_anzahl not in ('0') and waermeuebertrager in ('intern')) AS Typ3,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Brennwert') and hw_vorhanden = TRUE and mischer_anzahl not in ('0') and waermeuebertrager in ('extern')) AS Typ4,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Brennwert') and hw_vorhanden = TRUE and mischer_anzahl in ('0') and waermeuebertrager in ('intern')) AS Typ5,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Brennwert') and hw_vorhanden = TRUE and mischer_anzahl in ('0') and waermeuebertrager in ('extern')) AS Typ6,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Brennwert') and hw_vorhanden = FALSE and mischer_anzahl in ('0') and waermeuebertrager not in ('intern','extern')) AS Typ7,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Brennwert') and hw_vorhanden = FALSE and mischer_anzahl not in ('0') and waermeuebertrager NOT IN ('intern','extern')) AS Typ8,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Brennwert') and hw_vorhanden = FALSE and mischer_anzahl not in ('0') and waermeuebertrager in ('intern')) AS Typ9,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Brennwert') and hw_vorhanden = FALSE and mischer_anzahl not in ('0') and waermeuebertrager in ('extern')) AS Typ10,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Brennwert') and hw_vorhanden = FALSE and mischer_anzahl in ('0') and waermeuebertrager in ('intern')) AS Typ11,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Brennwert') and hw_vorhanden = FALSE and mischer_anzahl in ('0') and waermeuebertrager in ('extern')) AS Typ12
+	;
+-- Tabelle Niedertemperatur Typen Häufigkeit 
+SELECT (SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur') and waermeuebertrager in ('intern','extern')) AS Gesamt_Niedertemperatur_Hydraulik_Schema,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur') and hw_vorhanden = TRUE and mischer_anzahl in ('0') and waermeuebertrager not in ('intern','extern')) AS Typ13,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur') and hw_vorhanden = TRUE and mischer_anzahl not in ('0') and waermeuebertrager NOT IN ('intern','extern')) AS Typ14,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur') and hw_vorhanden = TRUE and mischer_anzahl not in ('0') and waermeuebertrager in ('intern')) AS Typ15,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur') and hw_vorhanden = TRUE and mischer_anzahl not in ('0') and waermeuebertrager in ('extern')) AS Typ16,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur') and hw_vorhanden = TRUE and mischer_anzahl in ('0') and waermeuebertrager in ('intern')) AS Typ17,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur') and hw_vorhanden = TRUE and mischer_anzahl in ('0') and waermeuebertrager in ('extern')) AS Typ18,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur') and hw_vorhanden = FALSE and mischer_anzahl in ('0') and waermeuebertrager not in ('intern','extern')) AS Typ19,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur') and hw_vorhanden = FALSE and mischer_anzahl not in ('0') and waermeuebertrager NOT IN ('intern','extern')) AS Typ20,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur') and hw_vorhanden = FALSE and mischer_anzahl not in ('0') and waermeuebertrager in ('intern')) AS Typ21,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur') and hw_vorhanden = FALSE and mischer_anzahl not in ('0') and waermeuebertrager in ('extern')) AS Typ22,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur') and hw_vorhanden = FALSE and mischer_anzahl in ('0') and waermeuebertrager in ('intern')) AS Typ23,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur') and hw_vorhanden = FALSE and mischer_anzahl in ('0') and waermeuebertrager in ('extern')) AS Typ24
+	;
+
+       -- Tabelle Niedertemperatur Typen Häufigkeit 
+SELECT (SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur','Brennwert') and waermeuebertrager in ('intern','extern')) AS Gesamt_Niedertemperatur_Hydraulik_Schema,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur','Brennwert') and hw_vorhanden = TRUE and mischer_anzahl in ('0') and waermeuebertrager not in ('intern','extern')) AS Typ13,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur','Brennwert') and hw_vorhanden = TRUE and mischer_anzahl not in ('0') and waermeuebertrager NOT IN ('intern','extern')) AS Typ14,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur','Brennwert') and hw_vorhanden = TRUE and mischer_anzahl not in ('0') and waermeuebertrager in ('intern')) AS Typ15,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur','Brennwert') and hw_vorhanden = TRUE and mischer_anzahl not in ('0') and waermeuebertrager in ('extern')) AS Typ16,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur','Brennwert') and hw_vorhanden = TRUE and mischer_anzahl in ('0') and waermeuebertrager in ('intern')) AS Typ17,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur','Brennwert') and hw_vorhanden = TRUE and mischer_anzahl in ('0') and waermeuebertrager in ('extern')) AS Typ18,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur','Brennwert') and hw_vorhanden = FALSE and mischer_anzahl in ('0') and waermeuebertrager not in ('intern','extern')) AS Typ19,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur','Brennwert') and hw_vorhanden = FALSE and mischer_anzahl not in ('0') and waermeuebertrager NOT IN ('intern','extern')) AS Typ20,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur','Brennwert') and hw_vorhanden = FALSE and mischer_anzahl not in ('0') and waermeuebertrager in ('intern')) AS Typ21,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur','Brennwert') and hw_vorhanden = FALSE and mischer_anzahl not in ('0') and waermeuebertrager in ('extern')) AS Typ22,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur','Brennwert') and hw_vorhanden = FALSE and mischer_anzahl in ('0') and waermeuebertrager in ('intern')) AS Typ23,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE anlagentyp in ('Niedertemperatur','Brennwert') and hw_vorhanden = FALSE and mischer_anzahl in ('0') and waermeuebertrager in ('extern')) AS Typ24
+	;
+
+SELECT (SELECT COUNT(*) FROM hydraulicscheme WHERE  waermeuebertrager in ('intern','extern')) AS Gesamt_Niedertemperatur_Hydraulik_Schema,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE hw_vorhanden = TRUE and mischer_anzahl in ('0') and waermeuebertrager not in ('intern','extern')) AS Typ13,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE hw_vorhanden = TRUE and mischer_anzahl not in ('0') and waermeuebertrager NOT IN ('intern','extern')) AS Typ14,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE hw_vorhanden = TRUE and mischer_anzahl not in ('0') and waermeuebertrager in ('intern')) AS Typ15,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE hw_vorhanden = TRUE and mischer_anzahl not in ('0') and waermeuebertrager in ('extern')) AS Typ16,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE hw_vorhanden = TRUE and mischer_anzahl in ('0') and waermeuebertrager in ('intern')) AS Typ17,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE hw_vorhanden = TRUE and mischer_anzahl in ('0') and waermeuebertrager in ('extern')) AS Typ18,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE hw_vorhanden = FALSE and mischer_anzahl in ('0') and waermeuebertrager not in ('intern','extern')) AS Typ19,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE hw_vorhanden = FALSE and mischer_anzahl not in ('0') and waermeuebertrager NOT IN ('intern','extern')) AS Typ20,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE hw_vorhanden = FALSE and mischer_anzahl not in ('0') and waermeuebertrager in ('intern')) AS Typ21,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE hw_vorhanden = FALSE and mischer_anzahl not in ('0') and waermeuebertrager in ('extern')) AS Typ22,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE hw_vorhanden = FALSE and mischer_anzahl in ('0') and waermeuebertrager in ('intern')) AS Typ23,
+	(SELECT COUNT(*) FROM hydraulicscheme WHERE hw_vorhanden = FALSE and mischer_anzahl in ('0') and waermeuebertrager in ('extern')) AS Typ2
+	;
+
+
+	select * from hydraulicscheme
+
+
+	
+
+
+-- select product,typ,  FROM kessel where object_number = '0002066'
+
+select * FROM kessel where object_number in ('0002066','0002071','0002073','0002074','0007002','0007008','0008041','0008043','0008045','0008048','0008049','0008050','0008091','0009001','0009002','0009003','0009004','0009005','0009006','0009007','0009008','0009045','0009046','0009047','0009048','0009049','0009050','0009051','0009052','0009093','0009113','0009114','0009115','0009116','0009117','0009118','0009119','0009120','0009121','0009122','0009123','0009124','0009125','0009126','0009127','0009128','0009145','0009177','0009182','0009183','0009184','0009185','0009186','0009187','0009198','0009199','0009201','0009202','0009221','0009222','0009226','0009316','0009317','0009318','0009319','0009320','0009323','0009404','0009407','0009428','0009429','0009430','0009431')
+order by object_number ASC
